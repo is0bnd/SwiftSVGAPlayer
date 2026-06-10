@@ -151,6 +151,6 @@ private final class SVGADrawingLayer: CALayer {
 
     override func draw(in ctx: CGContext) {
         guard let block = drawingBlock else { return }
-        block(ctx, bounds, currentFrameIndex)
+        block(self, ctx, bounds, currentFrameIndex)
     }
 }

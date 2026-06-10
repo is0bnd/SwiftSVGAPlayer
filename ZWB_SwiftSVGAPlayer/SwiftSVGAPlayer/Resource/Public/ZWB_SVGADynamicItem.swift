@@ -3,7 +3,7 @@
 import UIKit
 
 /// 动态绘制回调类型
-public typealias SVGADrawingBlock = (_ context: CGContext, _ frame: CGRect, _ frameIndex: Int) -> Void
+public typealias SVGADrawingBlock = (_ layer: CALayer, _ context: CGContext, _ frame: CGRect, _ frameIndex: Int) -> Void
 
 /// 动态内容项，用于替换 SVGA 中指定 key 的内容
 public enum SVGADynamicItem {
