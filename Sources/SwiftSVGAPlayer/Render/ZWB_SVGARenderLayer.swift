@@ -13,6 +13,7 @@ final class SVGARenderLayer: CALayer {
     private var spriteLayers: [SVGASpriteLayer] = []
     private var dynamicItems: SVGADynamicItems = [:]
     private var isConfigured = false
+    private var imageAnimationsPlaying = false
 
     // MARK: - Init
 
@@ -21,6 +22,9 @@ final class SVGARenderLayer: CALayer {
         isGeometryFlipped = false
         masksToBounds     = true   // 内容限制在 renderLayer frame 内，不超出 view
         actions = SVGARenderLayer.disabledActions
+        // 显式动图动画在播放器进入 playing 状态前保持暂停。
+        speed = 0
+        timeOffset = 0
     }
 
     override init(layer: Any) { super.init(layer: layer) }
@@ -95,6 +99,24 @@ final class SVGARenderLayer: CALayer {
         CATransaction.commit()
     }
 
+    // MARK: - Animated Image Timing
+
+    func setImageAnimationsPlaying(_ playing: Bool) {
+        guard imageAnimationsPlaying != playing else { return }
+        imageAnimationsPlaying = playing
+        if playing {
+            let pausedTime = timeOffset
+            speed = 1
+            timeOffset = 0
+            beginTime = 0
+            beginTime = convertTime(CACurrentMediaTime(), from: nil) - pausedTime
+        } else {
+            let pausedTime = convertTime(CACurrentMediaTime(), from: nil)
+            speed = 0
+            timeOffset = pausedTime
+        }
+    }
+
     // MARK: - Dynamic Items
 
     func setDynamicItems(_ items: SVGADynamicItems) { dynamicItems = items }
@@ -107,7 +129,10 @@ final class SVGARenderLayer: CALayer {
     // MARK: - Clear
 
     func clearLayers() {
-        spriteLayers.forEach { $0.removeFromSuperlayer() }
+        spriteLayers.forEach {
+            $0.clearDynamic()
+            $0.removeFromSuperlayer()
+        }
         spriteLayers.removeAll()
         video        = nil
         isConfigured = false

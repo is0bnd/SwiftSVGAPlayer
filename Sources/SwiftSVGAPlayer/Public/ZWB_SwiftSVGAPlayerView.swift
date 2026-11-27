@@ -226,7 +226,18 @@ public final class SwiftSVGAPlayerView: UIView {
     // MARK: - Dynamic Content
 
     public func setImage(_ image: UIImage?, forKey key: String) {
-        renderLayer.setDynamicItem(image.map { .image($0) }, forKey: key)
+        setImage(image, frameDurations: nil, forKey: key)
+    }
+
+    /// 保留动图各帧的独立时长；静态图片及 nil 的行为与原接口一致。
+    public func setImage(_ image: UIImage?, frameDurations: [TimeInterval]?, forKey key: String) {
+        let item = image.map { image -> SVGADynamicItem in
+            if let animation = SVGAAnimatedImage(image: image, frameDurations: frameDurations) {
+                return .animatedImage(animation)
+            }
+            return .image(image)
+        }
+        renderLayer.setDynamicItem(item, forKey: key)
     }
 
     public func setImageURL(_ url: URL?, forKey key: String) {
@@ -267,6 +278,7 @@ public final class SwiftSVGAPlayerView: UIView {
         renderLayer.step(to: startFrame)
         audioController.seek(toFrame: startFrame)
         playbackController.startDriver(fps: video.clampedFPS)
+        setState(playbackController.state)
     }
 
     private func setupPlaybackController() {
@@ -284,6 +296,7 @@ public final class SwiftSVGAPlayerView: UIView {
     private func setState(_ newState: SVGAPlaybackState) {
         guard state != newState else { return }
         state = newState
+        renderLayer.setImageAnimationsPlaying(newState == .playing)
         onStateChange?(newState)
     }
 

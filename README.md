@@ -169,6 +169,15 @@ player.clear()
 
 ### 动态内容
 
+`setImage(_:forKey:)` 自动识别包含完整帧序列的 `UIImage` 动图。
+需要保留各帧独立时长时，使用 `setImage(_:frameDurations:forKey:)`；
+时长数组应与 `image.images` 一一对应，且每项均为有限正数。
+懒解码图片需要由调用方先展开帧，库不依赖第三方图片解码器。
+
+动图按自身时序持续循环，跟随播放器暂停、恢复和停止；SVGA 循环、seek
+或反向播放不会重置或反向播放动图。保留当前画面时，动图也冻结在当前画面。
+动图需要持有完整帧序列，请由调用方控制解码尺寸和帧数。
+
 ```swift
 // 替换图片
 player.setImage(UIImage(named: "avatar"), forKey: "avatar")

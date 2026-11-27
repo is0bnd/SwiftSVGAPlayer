@@ -9,6 +9,8 @@ public typealias SVGADrawingBlock = (_ layer: CALayer, _ context: CGContext, _ f
 public enum SVGADynamicItem {
     /// 替换为静态图片
     case image(UIImage)
+    /// 替换为按自身时序循环播放的动图
+    case animatedImage(SVGAAnimatedImage)
     /// 替换为远程图片 URL（异步加载）
     case imageURL(URL)
     /// 替换为富文本

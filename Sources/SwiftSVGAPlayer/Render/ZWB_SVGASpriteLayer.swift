@@ -76,6 +76,7 @@ final class SVGASpriteLayer: CALayer {
             if let item = dynamicItems[key] {
                 switch item {
                 case .image(let img):  bl.setDynamicImage(img)
+                case .animatedImage(let image): bl.setAnimatedImage(image)
                 case .text(let attr):  bl.setDynamicText(attr)
                 case .hidden:          bl.isDynamicHidden = true
                 case .drawing(let block): bl.setDrawingBlock(block)

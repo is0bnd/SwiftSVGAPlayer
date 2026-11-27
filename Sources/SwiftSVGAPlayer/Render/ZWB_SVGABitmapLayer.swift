@@ -9,6 +9,8 @@ import QuartzCore
 final class SVGABitmapLayer: CALayer {
 
     private var dynamicImage: UIImage?
+    private var animatedImage: SVGAAnimatedImage?
+    private static let imageAnimationKey = "svga.dynamicImage"
     private var originalImage: UIImage?
     private var textLayer: CATextLayer?
     private var drawingBlock: SVGADrawingBlock?
@@ -78,11 +80,41 @@ final class SVGABitmapLayer: CALayer {
     // MARK: - Dynamic Content
 
     func setDynamicImage(_ image: UIImage?) {
+        guard dynamicImage !== image || animatedImage != nil else { return }
+        removeImageAnimation()
         dynamicImage = image
-        contents = (image ?? originalImage)?.cgImage
+        let displayedImage = image ?? originalImage
+        contents = displayedImage?.cgImage ?? displayedImage?.images?.first?.cgImage
+    }
+
+    func setAnimatedImage(_ image: SVGAAnimatedImage) {
+        // 同一资源会在 SVGA 每帧重复应用，不能因此重启动图。
+        guard animatedImage !== image else { return }
+        removeImageAnimation()
+        dynamicImage = image.image
+        animatedImage = image
+        contents = image.frames.first
+
+        let animation = CAKeyframeAnimation(keyPath: "contents")
+        animation.values = image.frames
+        animation.keyTimes = image.keyTimes
+        animation.duration = image.duration
+        animation.calculationMode = .discrete
+        animation.repeatCount = .infinity
+        animation.beginTime = convertTime(CACurrentMediaTime(), from: nil)
+        add(animation, forKey: Self.imageAnimationKey)
+    }
+
+    private func removeImageAnimation() {
+        guard animatedImage != nil else { return }
+        removeAnimation(forKey: Self.imageAnimationKey)
+        // 切换到文字或自定义绘制时，仅保留当前模型层底图，释放其余帧。
+        dynamicImage = animatedImage?.image.images?.first
+        animatedImage = nil
     }
 
     func setDynamicText(_ text: NSAttributedString?) {
+        removeImageAnimation()
         textLayer?.removeFromSuperlayer()
         textLayer = nil
         guard let text = text else { return }
@@ -96,6 +128,7 @@ final class SVGABitmapLayer: CALayer {
     }
 
     func setDrawingBlock(_ block: SVGADrawingBlock?) {
+        removeImageAnimation()
         drawingBlock = block
         drawingLayer?.removeFromSuperlayer()
         drawingLayer = nil
@@ -120,6 +153,7 @@ final class SVGABitmapLayer: CALayer {
     }
 
     func clearDynamic() {
+        removeImageAnimation()
         dynamicImage = nil
         contents     = originalImage?.cgImage
         textLayer?.removeFromSuperlayer()
